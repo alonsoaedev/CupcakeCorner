@@ -10,8 +10,9 @@ import SwiftUI
 struct CheckoutView: View {
     var order: Order
     
-    @State private var confirmationMessage: String = ""
-    @State private var showingConfirmation: Bool = false
+    @State private var alertTitle: String = ""
+    @State private var alertMessage: String = ""
+    @State private var showAlertMessage: Bool = false
     
     var body: some View {
         ScrollView {
@@ -39,10 +40,10 @@ struct CheckoutView: View {
         .navigationTitle("Check out")
         .navigationBarTitleDisplayMode(.inline)
         .scrollBounceBehavior(.basedOnSize)
-        .alert("Thank you!", isPresented: $showingConfirmation) {
+        .alert(alertTitle, isPresented: $showAlertMessage) {
             Button("OK") {  }
         } message: {
-            Text(confirmationMessage)
+            Text(alertMessage)
         }
     }
     
@@ -52,18 +53,21 @@ struct CheckoutView: View {
             return
         }
         
-        let url = URL(string: "https://jsonplaceholder.typicode.com/comments")!
-        var request = URLRequest(url: url)
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpMethod = "POST"
-        
         do {
+            let url = URL(string: "https://jsonplaceholder.typicode.com/comments")!
+            var request = URLRequest(url: url)
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    //        request.httpMethod = "POST"
             let (data, _) = try await URLSession.shared.upload(for: request, from: encodedOrder)
             let decodedOrder = try JSONDecoder().decode(Order.self, from: data)
-            confirmationMessage = "Your order for \(decodedOrder.quantity) x \(Order.types[decodedOrder.type].lowercased()) cupcakes is on its way"
-            showingConfirmation = true
+            alertTitle = "Thank you!"
+            alertMessage = "Your order for \(decodedOrder.quantity) x \(Order.types[decodedOrder.type].lowercased()) cupcakes is on its way"
+            showAlertMessage = true
         } catch {
             print("Check out failed: \(error.localizedDescription)")
+            alertTitle = "Oops!"
+            alertMessage = "There was an error with your order. Please try again later."
+            showAlertMessage = true
         }
     }
 }
